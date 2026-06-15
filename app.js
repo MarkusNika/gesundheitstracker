@@ -297,9 +297,19 @@ function makeChart(canvasId, datasets, labels) {
     },
   });
 }
+// Aktuell gewählter Zeitraum in Wochen (0 = alles). Liest das Auswahlfeld aus.
+function selectedRangeWeeks() {
+  const sel = $('#range-select');
+  const v = sel ? Number(sel.value) : 0;
+  return Number.isFinite(v) ? v : 0;
+}
 async function renderCharts() {
-  const daily = (await DB.getAll('daily')).sort((a, b) => a.date.localeCompare(b.date));
-  const weekly = (await DB.getAll('weekly')).sort((a, b) => a.date.localeCompare(b.date));
+  // Zeitraumfilter: Stichtag aus "heute minus N Wochen"; 0/null -> alles.
+  const cutoff = GTRange.cutoffISO(todayISO(), selectedRangeWeeks());
+  const daily = GTRange.filterByRange(await DB.getAll('daily'), cutoff)
+    .sort((a, b) => a.date.localeCompare(b.date));
+  const weekly = GTRange.filterByRange(await DB.getAll('weekly'), cutoff)
+    .sort((a, b) => a.date.localeCompare(b.date));
 
   // Blutdruck
   const bpLabels = daily.map((d) => d.date);
@@ -516,6 +526,9 @@ async function init() {
   ['#chest', '#abdomen', '#thigh'].forEach((s) => $(s).addEventListener('input', updateWeeklyPreview));
 
   $('#photo-input').addEventListener('change', (e) => addPhoto(e.target.files[0]));
+
+  // Zeitraumfilter der Charts: bei Auswahländerung neu zeichnen.
+  $('#range-select').addEventListener('change', renderCharts);
 
   $('#export-bp').addEventListener('click', exportBP);
   $('#export-body').addEventListener('click', exportBodyComp);

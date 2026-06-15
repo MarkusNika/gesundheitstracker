@@ -100,6 +100,13 @@
     <!-- VERLAUF -->
     <section id="view-verlauf" class="view">
       <h2>Verlauf</h2>
+      <label>Zeitraum
+        <select id="range-select">
+          <option value="4">Letzte 4 Wochen</option>
+          <option value="12">Letzte 12 Wochen</option>
+          <option value="0" selected>Alles</option>
+        </select>
+      </label>
       <h3>Blutdruck &amp; Puls</h3>
       <canvas id="chart-bp"></canvas>
       <h3>Gewicht</h3>
@@ -176,6 +183,7 @@
   <script src="validation.js"></script>
   <script src="entries-core.js"></script>
   <script src="photo-core.js"></script>
+  <script src="range-core.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
