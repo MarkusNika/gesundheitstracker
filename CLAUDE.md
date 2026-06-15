@@ -17,7 +17,7 @@ trifft der Arzt.
 - **Genauigkeit vor Vollständigkeit.** Keine erfundenen Fakten/Formeln/Werte. Bei
   Unsicherheit sagen statt raten.
 - **Datenschutz:** Gesundheitsdaten. Alles bleibt **lokal auf dem Gerät**. Keine
-  Cloud, kein Tracking, keine externen Requests außer der Chart-Bibliothek.
+  Cloud, kein Tracking, **keine externen Requests** (Chart.js liegt lokal im Repo).
 - Stil: sachlich, direkt.
 
 ## Architektur-Entscheidung
@@ -96,8 +96,8 @@ Deutsches Excel-Format: Trennzeichen `;`, **Dezimalkomma**, UTF-8 **mit BOM**.
 
 - Deutsch im UI und in Commit-Messages.
 - Vanilla JS, keine Frameworks/Bundler ohne Rücksprache (PWA-first-Prinzip).
-- Keine externen Netzwerk-Requests außer Chart.js-CDN. Wenn echtes Offline gewünscht:
-  Chart.js vendorn (lokal ablegen) statt CDN.
+- Keine externen Netzwerk-Requests. Chart.js ist **lokal vendort**
+  (`vendor/chart.umd.min.js`, gepinnt auf 4.4.7) — kein CDN, App läuft voll offline.
 - Keine Browser-Storage-Tricks außer IndexedDB.
 
 ## Roadmap / offene Punkte
@@ -106,10 +106,10 @@ Bereits im Scaffold: alle 6 Screens, Speichern/Laden, KFA-Berechnung, 3 Charts,
 beide CSV-Exporte, JSON-Backup, Service Worker, Manifest, Persistenz-Anfrage.
 
 Sinnvolle nächste Schritte (mit Nutzer abstimmen, nicht alles auf einmal):
-- [ ] **JSON-Backup-Import** (Restore) — Gegenstück zum Export, wichtig bei Handywechsel.
-- [ ] Eingabe-Validierung & sinnvolle Plausi-Hinweise (z. B. sys > dia).
-- [ ] Liste/Bearbeiten vergangener Tages-/Wocheneinträge (aktuell nur über Datumswahl).
-- [ ] Foto: Datum/Monat manuell setzbar, Bildkomprimierung vor dem Speichern.
-- [ ] Chart-Zeitraumfilter (z. B. letzte 4/12 Wochen).
-- [ ] Echtes Offline: Chart.js lokal vendorn.
+- [x] **JSON-Backup-Import** (Restore) — Gegenstück zum Export, wichtig bei Handywechsel.
+- [x] Eingabe-Validierung & sinnvolle Plausi-Hinweise (z. B. sys > dia).
+- [x] Liste/Bearbeiten vergangener Tages-/Wocheneinträge (aktuell nur über Datumswahl).
+- [x] Foto: Datum/Monat manuell setzbar, Bildkomprimierung vor dem Speichern.
+- [x] Chart-Zeitraumfilter (z. B. letzte 4/12 Wochen).
+- [x] Echtes Offline: Chart.js lokal vendorn.
 - [ ] Später: Capacitor-Hülle für native Kamera + Dateisystem (siehe oben).

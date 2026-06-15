@@ -1,7 +1,7 @@
 /* sw.js — einfaches App-Shell-Caching (Cache-first für statische Dateien).
  * Bei Änderungen am App-Shell CACHE-Version hochzählen, damit der SW aktualisiert.
  */
-const CACHE = 'gt-shell-v6';
+const CACHE = 'gt-shell-v7';
 const ASSETS = [
   './',
   './index.html',
@@ -13,10 +13,10 @@ const ASSETS = [
   './photo-core.js',
   './range-core.js',
   './app.js',
+  './vendor/chart.umd.min.js',
   './manifest.webmanifest',
   './icon-192.png',
   './icon-512.png',
-  'https://cdn.jsdelivr.net/npm/chart.js@4',
 ];
 
 self.addEventListener('install', (e) => {

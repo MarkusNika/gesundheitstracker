@@ -177,7 +177,8 @@
     <button class="tab" data-view="view-einstellungen">⚙︎</button>
   </nav>
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+  <!-- Chart.js lokal eingebunden (kein CDN) -> App funktioniert komplett offline. -->
+  <script src="vendor/chart.umd.min.js"></script>
   <script src="db.js"></script>
   <script src="import-core.js"></script>
   <script src="validation.js"></script>
