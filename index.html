@@ -86,10 +86,14 @@
     <!-- FOTOS -->
     <section id="view-fotos" class="view">
       <h2>Fotos (monatlich)</h2>
+      <label>Monat (für das nächste Foto, zum Nachtragen änderbar)
+        <input type="month" id="photo-month" />
+      </label>
       <label class="photo-btn">
         Foto aufnehmen
         <input type="file" id="photo-input" accept="image/*" capture="environment" hidden />
       </label>
+      <p class="muted">Fotos werden vor dem Speichern verkleinert (längste Kante max. 1280 px), um Speicherplatz zu sparen.</p>
       <div id="photo-list" class="photo-list"></div>
     </section>
 
@@ -171,6 +175,7 @@
   <script src="import-core.js"></script>
   <script src="validation.js"></script>
   <script src="entries-core.js"></script>
+  <script src="photo-core.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

@@ -228,10 +228,43 @@ async function deleteEntry(kind, date) {
   }
 }
 
-/* ---------- Fotos (monatlich) ---------- */
+/* ---------- Fotos (monatlich) ----------
+ * Foto wird einem wählbaren Monat zugeordnet (#photo-month, Nachtragen möglich)
+ * und vor dem Speichern verkleinert, damit die IndexedDB nicht von großen
+ * Handy-Bildern volläuft. Reine Logik (Zielmaße, Monatsprüfung) in photo-core.js.
+ */
+const PHOTO_MAX_EDGE = 1280; // px — längste Kante nach dem Verkleinern
+const PHOTO_QUALITY = 0.8;   // JPEG-Qualität (0..1)
+
+// Verkleinert ein Bild über ein <canvas> und gibt es als JPEG-Blob zurück.
+// Lässt sich das Bild nicht dekodieren (exotisches Format) oder liefert toBlob
+// nichts, wird die Originaldatei unverändert zurückgegeben — lieber groß
+// speichern als das Foto zu verlieren.
+function compressImage(file, maxEdge, quality) {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const { width, height } = GTPhoto.computeResize(img.naturalWidth, img.naturalHeight, maxEdge);
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+      URL.revokeObjectURL(url);
+      canvas.toBlob((blob) => resolve(blob || file), 'image/jpeg', quality);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
+    img.src = url;
+  });
+}
+
 async function addPhoto(file) {
   if (!file) return;
-  await DB.put('photos', { month: thisMonth(), blob: file, created: Date.now() });
+  // Monat aus dem Eingabefeld; bei leer/ungültig auf den aktuellen Monat zurückfallen.
+  let month = $('#photo-month').value;
+  if (!GTPhoto.isValidMonth(month)) month = thisMonth();
+  const blob = await compressImage(file, PHOTO_MAX_EDGE, PHOTO_QUALITY);
+  await DB.put('photos', { month, blob, created: Date.now() });
   renderPhotos();
 }
 async function renderPhotos() {
@@ -468,6 +501,7 @@ async function init() {
 
   $('#daily-date').value = todayISO();
   $('#weekly-date').value = todayISO();
+  $('#photo-month').value = GTPhoto.defaultPhotoMonth(todayISO());
   await loadSettings();
   await loadDaily();
   await loadWeekly();
