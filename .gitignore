@@ -9,3 +9,7 @@ Desktop.ini
 
 # Aider (falls genutzt)
 .aider*
+
+# Browser-Test-Artefakte (Playwright-MCP: Snapshots, Screenshots, Konsole-Logs)
+.playwright-mcp/
+verify-*.png
