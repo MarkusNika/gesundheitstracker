@@ -239,6 +239,77 @@ function blobToBase64(blob) {
   });
 }
 
+/* ---------- Import / Wiederherstellen ----------
+ * Gegenstück zu exportBackup(). Liest eine backup_*.json und schreibt sie in
+ * die IndexedDB. Die reine Logik (Validierung, Base64->Blob, Foto-Dedup) liegt
+ * in import-core.js (window.GTImport) und ist dort automatisiert getestet.
+ *
+ * Zwei Modi (per Radio-Button im Export-Screen gewählt):
+ *   'merge'   - vorhandene Daten bleiben; gleiche Datums-Keys werden überschrieben.
+ *   'replace' - Stores werden vorher geleert; exakte 1:1-Wiederherstellung.
+ */
+async function importBackup(file) {
+  const mode = (document.querySelector('input[name="import-mode"]:checked') || {}).value || 'merge';
+
+  // 1) Datei einlesen + parsen. Fehler hier -> klarer Abbruch, NICHTS wird geschrieben.
+  let obj;
+  try {
+    const text = await file.text();
+    obj = JSON.parse(text);
+  } catch (e) {
+    flash('#import-status', 'Fehler: Datei ist kein gültiges JSON.');
+    return;
+  }
+
+  // 2) Struktur prüfen. Bei Problemen abbrechen, bevor irgendetwas geschrieben wird.
+  const check = GTImport.validateBackup(obj);
+  if (!check.ok) {
+    flash('#import-status', 'Ungültiges Backup: ' + check.errors.join(' '), 6000);
+    return;
+  }
+
+  // 3) Sicherheitsabfrage beim destruktiven Modus.
+  if (mode === 'replace') {
+    const ok = confirm(
+      'Modus "Komplett ersetzen": Alle aktuell gespeicherten Daten auf diesem ' +
+      'Gerät werden gelöscht und durch das Backup ersetzt. Fortfahren?'
+    );
+    if (!ok) { flash('#import-status', 'Abgebrochen.'); return; }
+
+    // Reihenfolge egal; jeder Store wird komplett geleert.
+    for (const store of GTImport.STORES) await DB.clear(store);
+  }
+
+  // 4) Datensätze schreiben. daily/weekly/settings haben feste keyPaths
+  //    ('date' bzw. 'key') -> put() überschreibt gleiche Schlüssel von selbst.
+  for (const rec of obj.daily) await DB.put('daily', rec);
+  for (const rec of obj.weekly) await DB.put('weekly', rec);
+  for (const rec of obj.settings) await DB.put('settings', rec);
+
+  // 5) Fotos gesondert: Base64 -> Blob, und Duplikate (month+created) überspringen.
+  //    Im 'replace'-Modus sind die Stores leer -> nichts gilt als Duplikat.
+  const existing = await DB.getAll('photos');
+  const { toAdd, skipped } = GTImport.partitionPhotos(existing, obj.photos);
+  for (const p of toAdd) {
+    const blob = GTImport.base64ToBlob(p.data, p.type);
+    // id NICHT übernehmen: 'photos' nutzt autoIncrement, sonst Kollisionsgefahr.
+    await DB.put('photos', { month: p.month, blob, created: p.created });
+  }
+
+  // 6) Sichtbare Views neu laden, damit die importierten Daten sofort erscheinen.
+  await loadSettings();
+  await loadDaily();
+  await loadWeekly();
+
+  const skipHinweis = skipped > 0 ? `, ${skipped} Foto(s) übersprungen` : '';
+  flash(
+    '#import-status',
+    `Wiederhergestellt: ${obj.daily.length} Tage, ${obj.weekly.length} Wochen, ` +
+    `${toAdd.length} Foto(s)${skipHinweis} ✓`,
+    6000
+  );
+}
+
 /* ---------- Einstellungen ---------- */
 async function loadSettings() {
   const cfg = await DB.getConfig();
@@ -259,10 +330,10 @@ async function saveSettings() {
 }
 
 /* ---------- UI-Kleinkram ---------- */
-function flash(sel, msg) {
+function flash(sel, msg, ms) {
   const el = $(sel);
   el.textContent = msg;
-  setTimeout(() => { el.textContent = ''; }, 2000);
+  setTimeout(() => { el.textContent = ''; }, ms || 2000);
 }
 
 /* ---------- Init ---------- */
@@ -296,6 +367,14 @@ async function init() {
   $('#export-bp').addEventListener('click', exportBP);
   $('#export-body').addEventListener('click', exportBodyComp);
   $('#export-backup').addEventListener('click', exportBackup);
+
+  // Backup-Import: nach Auswahl einer Datei importieren, dann input zurücksetzen,
+  // damit dieselbe Datei bei Bedarf erneut gewählt werden kann (change feuert sonst nicht).
+  $('#import-input').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (file) await importBackup(file);
+    e.target.value = '';
+  });
 
   $('#save-settings').addEventListener('click', saveSettings);
 

@@ -76,6 +76,13 @@ button {
 button.primary { background: var(--primary); color: var(--primary-ink); border-color: var(--primary); }
 #view-export button { display: block; width: 100%; margin-bottom: 12px; }
 
+/* Radio-Auswahl (z. B. Import-Modus): Label als Block, der Radio-Button selbst
+ * aber wieder klein/inline — sonst greift die globale input{width:100%}-Regel. */
+.radio { display: flex; gap: 8px; align-items: flex-start; margin-bottom: 10px; cursor: pointer; }
+.radio input[type="radio"] { width: auto; margin: 2px 0 0; flex: 0 0 auto; }
+
+hr { border: none; border-top: 1px solid var(--line); margin: 20px 0; }
+
 .status { margin-left: 10px; color: #16a34a; font-size: 0.9rem; }
 .muted { color: var(--muted); font-size: 0.9rem; }
 code { background: var(--line); padding: 1px 5px; border-radius: 4px; }

@@ -74,6 +74,17 @@
     });
   }
 
+  // Leert einen kompletten Object-Store. Wird vom Backup-Import im Modus
+  // "Komplett ersetzen" gebraucht (alle alten Daten weg, dann Backup einspielen).
+  async function clear(store) {
+    const os = await tx(store, 'readwrite');
+    return new Promise((resolve, reject) => {
+      const r = os.clear();
+      r.onsuccess = () => resolve();
+      r.onerror = () => reject(r.error);
+    });
+  }
+
   // Settings-Convenience
   async function getConfig() {
     const c = await get('settings', 'config');
@@ -84,5 +95,5 @@
     return put('settings', cfg);
   }
 
-  window.DB = { open, put, get, getAll, remove, getConfig, saveConfig };
+  window.DB = { open, put, get, getAll, remove, clear, getConfig, saveConfig };
 })();

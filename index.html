@@ -101,6 +101,31 @@
       <button id="export-bp">Blutdruck-CSV (für Arzt)</button>
       <button id="export-body">Körperfett &amp; Gewicht-CSV (für Arzt)</button>
       <button id="export-backup">Vollsicherung (JSON, inkl. Fotos)</button>
+
+      <hr />
+      <h3>Wiederherstellen</h3>
+      <p class="muted">
+        Spielt eine zuvor exportierte <code>backup_*.json</code> wieder ein —
+        z. B. nach einem Gerätewechsel.
+      </p>
+      <fieldset>
+        <legend>Modus</legend>
+        <label class="radio">
+          <input type="radio" name="import-mode" value="merge" checked />
+          Zusammenführen — vorhandene Einträge mit gleichem Datum werden
+          überschrieben, der Rest bleibt erhalten. Doppelte Fotos werden übersprungen.
+        </label>
+        <label class="radio">
+          <input type="radio" name="import-mode" value="replace" />
+          Komplett ersetzen — <strong>alle</strong> aktuellen Daten werden zuvor
+          gelöscht und exakt durch das Backup ersetzt.
+        </label>
+      </fieldset>
+      <label class="photo-btn">
+        Backup-Datei wählen …
+        <input type="file" id="import-input" accept="application/json,.json" hidden />
+      </label>
+      <span id="import-status" class="status"></span>
     </section>
 
     <!-- EINSTELLUNGEN -->
@@ -133,6 +158,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
   <script src="db.js"></script>
+  <script src="import-core.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
