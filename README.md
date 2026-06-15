@@ -1,8 +1,9 @@
 # Gesundheitstracker
 
 Persönliche PWA zur Erfassung von Blutdruck, Puls, Medikamenten, Gewicht, Körperfett
-(3-Punkt-Hautfalten), Monatsfotos und Tagesprotokoll. Daten bleiben lokal auf dem Gerät
-(IndexedDB). CSV-Export für den Arzt, JSON-Vollsicherung als Backup.
+(3-Punkt-Hautfalten, Männer- & Frauen-Protokoll), Monatsfotos und Tagesprotokoll. Daten
+bleiben lokal auf dem Gerät (IndexedDB). CSV-Export für den Arzt, JSON-Vollsicherung als
+Backup. Läuft komplett offline (keine externen Requests, Chart.js lokal eingebunden).
 
 > Begleitendes Werkzeug für eine ärztlich betreute Ernährungsumstellung — keine
 > medizinische Beratung. Details siehe `CLAUDE.md`.
@@ -30,6 +31,16 @@ Dann `http://localhost:8080` öffnen.
 
 CSV/JSON-Exporte landen im Android-Downloads-Ordner und lassen sich von dort an den
 Arzt mailen.
+
+## Tests
+
+Die testbare Kernlogik (Eingabe-Validierung, Backup-Import, Körperfett-Berechnung,
+Eintrags-Listen, Foto- und Zeitraum-Helfer) liegt in `*-core.js`-Modulen und ist mit
+dem eingebauten Test-Runner von Node abgedeckt — ohne zusätzliche Abhängigkeiten:
+
+```bash
+node --test
+```
 
 ## Struktur
 
