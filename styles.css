@@ -109,6 +109,25 @@ code { background: var(--line); padding: 1px 5px; border-radius: 4px; }
 
 canvas { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 8px; }
 
+/* Listen vergangener Einträge (unter Heute-/Woche-Formular).
+ * Jede Zeile: links eine große Schaltfläche (Datum + Kurz-Zusammenfassung) zum
+ * Bearbeiten, rechts ein kleiner Löschen-Knopf. */
+.entry-list-box { margin-top: 22px; }
+.entry-list { list-style: none; margin: 0; padding: 0; }
+.entry-empty { padding: 8px 2px; }
+.entry { display: flex; align-items: stretch; gap: 8px; margin-bottom: 8px; }
+.entry-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  text-align: left;
+}
+.entry-date { font-weight: 600; font-size: 0.95rem; color: var(--ink); }
+.entry-sum { font-size: 0.85rem; color: var(--muted); }
+.entry-del { flex: 0 0 auto; font-size: 0.85rem; color: #dc2626; }
+
 .tabbar {
   position: fixed;
   bottom: 0; left: 0; right: 0;

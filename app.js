@@ -90,6 +90,7 @@ async function saveDaily() {
   }
 
   await DB.put('daily', rec);
+  await renderDailyList(); // Liste mit dem neuen/aktualisierten Eintrag auffrischen
   // Bei Hinweisen wird trotzdem gespeichert, der Hinweis aber sichtbar gemacht.
   if (check.warnings.length) {
     flash('#daily-status', 'Gespeichert ✓ — Hinweis: ' + check.warnings.join(' '), 8000, 'warn');
@@ -147,10 +148,83 @@ async function saveWeekly() {
   }
 
   await DB.put('weekly', rec);
+  await renderWeeklyList(); // Liste mit dem neuen/aktualisierten Eintrag auffrischen
   if (check.warnings.length) {
     flash('#weekly-status', 'Gespeichert ✓ — Hinweis: ' + check.warnings.join(' '), 9000, 'warn');
   } else {
     flash('#weekly-status', 'Gespeichert ✓');
+  }
+}
+
+/* ---------- Listen vergangener Einträge ----------
+ * Zeigt unter dem Tages- bzw. Wochenformular alle bisher gespeicherten
+ * Datensätze (neueste zuerst). So kommt man an alte Einträge heran, ohne das
+ * Datum von Hand zu erraten.
+ *   - "Bearbeiten" (Klick auf die Zeile): lädt den Eintrag ins Formular darüber
+ *     und scrollt nach oben — Speichern läuft dann über die bestehende Logik.
+ *   - "Löschen": entfernt den Eintrag nach Rückfrage.
+ * Reine Logik (Sortierung, Datumsformat, Kurz-Zusammenfassung) liegt in
+ * entries-core.js (window.GTEntries) und ist dort automatisiert getestet.
+ */
+async function renderDailyList() {
+  const rows = GTEntries.sortByDateDesc(await DB.getAll('daily'));
+  renderEntryList($('#daily-list'), rows, GTEntries.summarizeDaily, 'daily');
+}
+async function renderWeeklyList() {
+  const rows = GTEntries.sortByDateDesc(await DB.getAll('weekly'));
+  renderEntryList($('#weekly-list'), rows, GTEntries.summarizeWeekly, 'weekly');
+}
+
+// Gemeinsame Darstellung beider Listen. `kind` ('daily'|'weekly') steuert, welches
+// Datumsfeld und welche Lade-Funktion beim Bearbeiten/Löschen benutzt werden.
+// Hinweis zur Sicherheit: In die Zeilen fließt nur Datum + die in entries-core
+// erzeugte Zusammenfassung (kein freier Nutzertext) -> innerHTML hier unkritisch.
+function renderEntryList(box, rows, summarize, kind) {
+  box.innerHTML = '';
+  if (!rows.length) {
+    box.innerHTML = '<li class="muted entry-empty">Noch keine Einträge.</li>';
+    return;
+  }
+  for (const rec of rows) {
+    const li = document.createElement('li');
+    li.className = 'entry';
+    li.innerHTML =
+      `<button class="entry-main" data-date="${rec.date}" type="button">` +
+        `<span class="entry-date">${GTEntries.formatDateDE(rec.date)}</span>` +
+        `<span class="entry-sum">${summarize(rec)}</span>` +
+      `</button>` +
+      `<button class="entry-del" data-date="${rec.date}" type="button">löschen</button>`;
+    box.appendChild(li);
+  }
+  box.querySelectorAll('.entry-main').forEach((b) =>
+    b.addEventListener('click', () => editEntry(kind, b.dataset.date)));
+  box.querySelectorAll('.entry-del').forEach((b) =>
+    b.addEventListener('click', () => deleteEntry(kind, b.dataset.date)));
+}
+
+async function editEntry(kind, date) {
+  if (kind === 'daily') {
+    $('#daily-date').value = date;
+    await loadDaily();
+  } else {
+    $('#weekly-date').value = date;
+    await loadWeekly();
+  }
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+async function deleteEntry(kind, date) {
+  const label = GTEntries.formatDateDE(date);
+  if (!confirm(`Eintrag vom ${label} wirklich löschen? Das lässt sich nicht rückgängig machen.`)) return;
+  await DB.remove(kind, date); // Store-Name == kind ('daily' / 'weekly')
+  // Liste neu zeichnen; war der gelöschte Datensatz gerade im Formular geladen,
+  // Formular ebenfalls neu laden (zeigt dann leere Felder für dieses Datum).
+  if (kind === 'daily') {
+    await renderDailyList();
+    if ($('#daily-date').value === date) await loadDaily();
+  } else {
+    await renderWeeklyList();
+    if ($('#weekly-date').value === date) await loadWeekly();
   }
 }
 
@@ -325,6 +399,8 @@ async function importBackup(file) {
   await loadSettings();
   await loadDaily();
   await loadWeekly();
+  await renderDailyList();
+  await renderWeeklyList();
 
   const skipHinweis = skipped > 0 ? `, ${skipped} Foto(s) übersprungen` : '';
   flash(
@@ -395,6 +471,8 @@ async function init() {
   await loadSettings();
   await loadDaily();
   await loadWeekly();
+  await renderDailyList();
+  await renderWeeklyList();
 
   $('#daily-date').addEventListener('change', loadDaily);
   $('#save-daily').addEventListener('click', saveDaily);
