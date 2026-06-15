@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#2563eb" />
+  <title>Gesundheitstracker</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icon-192.png" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <h1>Gesundheitstracker</h1>
+  </header>
+
+  <main>
+    <!-- HEUTE -->
+    <section id="view-heute" class="view">
+      <h2>Heute</h2>
+      <label>Datum
+        <input type="date" id="daily-date" />
+      </label>
+
+      <fieldset>
+        <legend>Blutdruck</legend>
+        <div class="row">
+          <label>Systolisch <input type="number" id="sys" inputmode="numeric" placeholder="mmHg" /></label>
+          <label>Diastolisch <input type="number" id="dia" inputmode="numeric" placeholder="mmHg" /></label>
+          <label>Puls <input type="number" id="pulse" inputmode="numeric" placeholder="/min" /></label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Medikamente</legend>
+        <div class="row">
+          <label><span id="medA-label">Medikament A</span> <input type="number" id="medA" inputmode="decimal" placeholder="mg" /></label>
+          <label><span id="medB-label">Medikament B</span> <input type="number" id="medB" inputmode="decimal" placeholder="mg" /></label>
+        </div>
+      </fieldset>
+
+      <label>Gegessen
+        <textarea id="food" rows="3" placeholder="Kurze Notizen zum Essen ..."></textarea>
+      </label>
+      <label>Protokoll
+        <textarea id="protocol" rows="4" placeholder="Tagesprotokoll, Befinden, Besonderheiten ..."></textarea>
+      </label>
+
+      <button id="save-daily" class="primary">Tag speichern</button>
+      <span id="daily-status" class="status"></span>
+    </section>
+
+    <!-- WOCHE -->
+    <section id="view-woche" class="view">
+      <h2>Woche</h2>
+      <label>Datum
+        <input type="date" id="weekly-date" />
+      </label>
+      <label>Gewicht (kg)
+        <input type="number" id="weight" inputmode="decimal" placeholder="kg" />
+      </label>
+      <fieldset>
+        <legend>Hautfalten (3-Punkt, mm)</legend>
+        <div class="row">
+          <label>Brust <input type="number" id="chest" inputmode="decimal" placeholder="mm" /></label>
+          <label>Bauch <input type="number" id="abdomen" inputmode="decimal" placeholder="mm" /></label>
+          <label>Oberschenkel <input type="number" id="thigh" inputmode="decimal" placeholder="mm" /></label>
+        </div>
+        <p id="weekly-preview" class="muted"></p>
+      </fieldset>
+      <button id="save-weekly" class="primary">Woche speichern</button>
+      <span id="weekly-status" class="status"></span>
+    </section>
+
+    <!-- FOTOS -->
+    <section id="view-fotos" class="view">
+      <h2>Fotos (monatlich)</h2>
+      <label class="photo-btn">
+        Foto aufnehmen
+        <input type="file" id="photo-input" accept="image/*" capture="environment" hidden />
+      </label>
+      <div id="photo-list" class="photo-list"></div>
+    </section>
+
+    <!-- VERLAUF -->
+    <section id="view-verlauf" class="view">
+      <h2>Verlauf</h2>
+      <h3>Blutdruck &amp; Puls</h3>
+      <canvas id="chart-bp"></canvas>
+      <h3>Gewicht</h3>
+      <canvas id="chart-weight"></canvas>
+      <h3>Körperfett</h3>
+      <canvas id="chart-bf"></canvas>
+    </section>
+
+    <!-- EXPORT -->
+    <section id="view-export" class="view">
+      <h2>Export</h2>
+      <p class="muted">CSV im deutschen Excel-Format (Trennzeichen <code>;</code>, Dezimalkomma, UTF-8).</p>
+      <button id="export-bp">Blutdruck-CSV (für Arzt)</button>
+      <button id="export-body">Körperfett &amp; Gewicht-CSV (für Arzt)</button>
+      <button id="export-backup">Vollsicherung (JSON, inkl. Fotos)</button>
+    </section>
+
+    <!-- EINSTELLUNGEN -->
+    <section id="view-einstellungen" class="view">
+      <h2>Einstellungen</h2>
+      <label>Protokoll
+        <select id="set-sex">
+          <option value="male">Männer (Brust/Bauch/Oberschenkel)</option>
+          <option value="female" disabled>Frauen (noch nicht implementiert)</option>
+        </select>
+      </label>
+      <label>Geburtsdatum (für Altersberechnung)
+        <input type="date" id="set-birthdate" />
+      </label>
+      <label>Name Medikament A <input type="text" id="set-medA" placeholder="z. B. Ramipril" /></label>
+      <label>Name Medikament B <input type="text" id="set-medB" placeholder="z. B. Amlodipin" /></label>
+      <button id="save-settings" class="primary">Einstellungen speichern</button>
+      <span id="set-status" class="status"></span>
+    </section>
+  </main>
+
+  <nav class="tabbar">
+    <button class="tab" data-view="view-heute">Heute</button>
+    <button class="tab" data-view="view-woche">Woche</button>
+    <button class="tab" data-view="view-fotos">Fotos</button>
+    <button class="tab" data-view="view-verlauf">Verlauf</button>
+    <button class="tab" data-view="view-export">Export</button>
+    <button class="tab" data-view="view-einstellungen">⚙︎</button>
+  </nav>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+  <script src="db.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

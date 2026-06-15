@@ -1,0 +1,11 @@
+# Betriebssystem
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Editor
+.vscode/
+*.swp
+
+# Aider (falls genutzt)
+.aider*
