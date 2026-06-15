@@ -83,7 +83,11 @@ button.primary { background: var(--primary); color: var(--primary-ink); border-c
 
 hr { border: none; border-top: 1px solid var(--line); margin: 20px 0; }
 
-.status { margin-left: 10px; color: #16a34a; font-size: 0.9rem; }
+/* Statusmeldungen. Standard grün (ok); Validierung setzt warn/error zusätzlich.
+ * .status wird auch nach längeren Texten umgebrochen dargestellt (block). */
+.status { display: block; margin: 8px 0 0; color: #16a34a; font-size: 0.9rem; }
+.status.warn { color: #b45309; }   /* gelb/braun: Hinweis, gespeichert */
+.status.error { color: #dc2626; }  /* rot: Fehler, nicht gespeichert */
 .muted { color: var(--muted); font-size: 0.9rem; }
 code { background: var(--line); padding: 1px 5px; border-radius: 4px; }
 

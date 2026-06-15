@@ -81,8 +81,21 @@ async function saveDaily() {
     food: $('#food').value.trim(),
     protocol: $('#protocol').value.trim(),
   };
+
+  // Validierung: Fehler blockieren das Speichern, Hinweise (warnings) nicht.
+  const check = GTValidate.validateDaily(rec);
+  if (check.errors.length) {
+    flash('#daily-status', '⚠ ' + check.errors.join(' '), 8000, 'error');
+    return; // NICHT speichern
+  }
+
   await DB.put('daily', rec);
-  flash('#daily-status', 'Gespeichert ✓');
+  // Bei Hinweisen wird trotzdem gespeichert, der Hinweis aber sichtbar gemacht.
+  if (check.warnings.length) {
+    flash('#daily-status', 'Gespeichert ✓ — Hinweis: ' + check.warnings.join(' '), 8000, 'warn');
+  } else {
+    flash('#daily-status', 'Gespeichert ✓');
+  }
 }
 
 /* ---------- Wochenformular (Gewicht + Hautfalten) ---------- */
@@ -125,8 +138,20 @@ async function saveWeekly() {
     age: age,
     bf_pct: sum != null ? bodyFatMale(sum, age) : null,
   };
+
+  // Validierung: Fehler blockieren, Hinweise (z. B. sehr dicke Falten) nicht.
+  const check = GTValidate.validateWeekly(rec);
+  if (check.errors.length) {
+    flash('#weekly-status', '⚠ ' + check.errors.join(' '), 8000, 'error');
+    return; // NICHT speichern
+  }
+
   await DB.put('weekly', rec);
-  flash('#weekly-status', 'Gespeichert ✓');
+  if (check.warnings.length) {
+    flash('#weekly-status', 'Gespeichert ✓ — Hinweis: ' + check.warnings.join(' '), 9000, 'warn');
+  } else {
+    flash('#weekly-status', 'Gespeichert ✓');
+  }
 }
 
 /* ---------- Fotos (monatlich) ---------- */
@@ -319,21 +344,37 @@ async function loadSettings() {
   $('#set-medB').value = cfg.medB || '';
 }
 async function saveSettings() {
-  await DB.saveConfig({
+  const cfg = {
     sex: $('#set-sex').value,
     birthdate: $('#set-birthdate').value,
     medA: $('#set-medA').value.trim() || 'Medikament A',
     medB: $('#set-medB').value.trim() || 'Medikament B',
-  });
+  };
+
+  // Validierung: Geburtsdatum darf nicht in der Zukunft liegen (würde Alter/KFA verfälschen).
+  const check = GTValidate.validateConfig(cfg, todayISO());
+  if (check.errors.length) {
+    flash('#set-status', '⚠ ' + check.errors.join(' '), 8000, 'error');
+    return; // NICHT speichern
+  }
+
+  await DB.saveConfig(cfg);
   flash('#set-status', 'Gespeichert ✓');
   loadDaily();
 }
 
 /* ---------- UI-Kleinkram ---------- */
-function flash(sel, msg, ms) {
+/* Statusmeldung kurz anzeigen.
+ * type: 'ok' (grün, Standard) | 'warn' (gelb) | 'error' (rot) -> setzt CSS-Klasse.
+ * ms:   Anzeigedauer; 0 = dauerhaft stehen lassen (bis zur nächsten Meldung). */
+function flash(sel, msg, ms, type) {
   const el = $(sel);
   el.textContent = msg;
-  setTimeout(() => { el.textContent = ''; }, ms || 2000);
+  el.className = 'status' + (type && type !== 'ok' ? ' ' + type : '');
+  if (ms !== 0) {
+    const dauer = ms || 2000;
+    setTimeout(() => { el.textContent = ''; el.className = 'status'; }, dauer);
+  }
 }
 
 /* ---------- Init ---------- */
