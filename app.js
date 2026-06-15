@@ -29,20 +29,21 @@ function ageAt(dateISO, birthdate) {
   return a;
 }
 
-/* ---------- Körperfett: Jackson-Pollock 3-Punkt (Männer) ----------
- * Sites: Brust + Bauch + Oberschenkel (mm)
- * Quelle: Jackson & Pollock (1978). British Journal of Nutrition, 40, 497-504.
- * Körperdichte = 1.10938 - 0.0008267*S + 0.0000016*S^2 - 0.0002574*Alter
- * Körperfett % (Siri) = (495 / Dichte) - 450
- * Hinweis: Bei sehr dicken Falten (>40-50 mm) liegt man ggf. außerhalb des
- * validierten Bereichs -> absoluter Wert vorsichtig interpretieren, Trend ist robust.
+/* ---------- Körperfett ----------
+ * Die Formeln (Jackson-Pollock Männer 1978 / Frauen 1980, Siri-Umrechnung) liegen
+ * im getesteten Modul bodyfat-core.js (window.GTBodyFat). Welches Protokoll gilt,
+ * entscheidet das in den Einstellungen gewählte Geschlecht (cfg.sex) ->
+ * GTBodyFat.bySex(sex, summe, alter).
  */
-function bodyFatMale(sumMM, age) {
-  if (sumMM == null || age == null || sumMM <= 0) return null;
-  const d = 1.10938 - 0.0008267 * sumMM + 0.0000016 * sumMM * sumMM - 0.0002574 * age;
-  if (d <= 0) return null;
-  const bf = 495 / d - 450;
-  return Math.round(bf * 10) / 10;
+
+// Hautfalten-Beschriftung an das Protokoll anpassen. Die DB-Felder heißen aus
+// Bestandsgründen chest_mm/abdomen_mm/thigh_mm; im Frauen-Protokoll stehen dort
+// fachlich Trizeps/Suprailiac/Oberschenkel. Die App ist für EINE Person mit
+// festem Protokoll, daher ist die Mehrfachnutzung derselben Felder unkritisch.
+function applyProtocolLabels(sex) {
+  const female = sex === 'female';
+  $('#fold1-label').textContent = female ? 'Trizeps' : 'Brust';
+  $('#fold2-label').textContent = female ? 'Suprailiac' : 'Bauch';
 }
 
 /* ---------- Navigation ---------- */
@@ -117,7 +118,7 @@ async function updateWeeklyPreview() {
   const age = ageAt(date, cfg.birthdate);
   if (c != null && a != null && t != null) {
     const sum = c + a + t;
-    const bf = bodyFatMale(sum, age);
+    const bf = GTBodyFat.bySex(cfg.sex, sum, age);
     $('#weekly-preview').textContent =
       `Summe: ${sum} mm` + (age != null ? `, Alter: ${age}` : ', Alter: – (Geburtsdatum fehlt)') +
       (bf != null ? `, KFA: ${bf.toString().replace('.', ',')} %` : '');
@@ -137,7 +138,7 @@ async function saveWeekly() {
     chest_mm: c, abdomen_mm: a, thigh_mm: t,
     sum_mm: sum,
     age: age,
-    bf_pct: sum != null ? bodyFatMale(sum, age) : null,
+    bf_pct: sum != null ? GTBodyFat.bySex(cfg.sex, sum, age) : null,
   };
 
   // Validierung: Fehler blockieren, Hinweise (z. B. sehr dicke Falten) nicht.
@@ -352,7 +353,12 @@ async function exportBP() {
 }
 async function exportBodyComp() {
   const rows = (await DB.getAll('weekly')).sort((a, b) => a.date.localeCompare(b.date));
-  const head = ['Datum', 'Gewicht_kg', 'Brust_mm', 'Bauch_mm', 'Oberschenkel_mm', 'Summe_mm', 'Alter', 'KFA_Prozent'];
+  // Site-Spalten passend zum Protokoll benennen, damit der Arzt sie richtig liest.
+  const cfg = await DB.getConfig();
+  const female = cfg.sex === 'female';
+  const s1 = female ? 'Trizeps_mm' : 'Brust_mm';
+  const s2 = female ? 'Suprailiac_mm' : 'Bauch_mm';
+  const head = ['Datum', 'Gewicht_kg', s1, s2, 'Oberschenkel_mm', 'Summe_mm', 'Alter', 'KFA_Prozent'];
   const lines = [head.join(SEP)];
   for (const r of rows)
     lines.push([r.date, deNum(r.weight_kg), deNum(r.chest_mm), deNum(r.abdomen_mm), deNum(r.thigh_mm),
@@ -461,6 +467,7 @@ async function loadSettings() {
   $('#set-birthdate').value = cfg.birthdate || '';
   $('#set-medA').value = cfg.medA || '';
   $('#set-medB').value = cfg.medB || '';
+  applyProtocolLabels(cfg.sex); // Hautfalten-Beschriftung passend zum Protokoll
 }
 async function saveSettings() {
   const cfg = {
@@ -479,6 +486,8 @@ async function saveSettings() {
 
   await DB.saveConfig(cfg);
   flash('#set-status', 'Gespeichert ✓');
+  applyProtocolLabels(cfg.sex); // geänderte Protokoll-Beschriftung sofort übernehmen
+  updateWeeklyPreview();        // KFA-Vorschau mit der jetzt gültigen Formel neu rechnen
   loadDaily();
 }
 

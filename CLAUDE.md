@@ -69,7 +69,10 @@ in der Praxis zu fragil ist. Nicht ohne Rücksprache starten.
 
 ## Körperfett-Formel — NICHT verändern ohne Quelle
 
-Jackson-Pollock **3-Punkt, Männer** (Sites: Brust, Bauch, Oberschenkel in mm).
+Jackson-Pollock **3-Punkt**, Siri-Umrechnung. Beide Protokolle liegen im getesteten
+Modul `bodyfat-core.js` (`window.GTBodyFat`); welches gilt, steuert `cfg.sex`.
+
+**Männer** (Sites: Brust, Bauch, Oberschenkel in mm).
 Quelle: Jackson, A.S. & Pollock, M.L. (1978), *British Journal of Nutrition*, 40, 497–504.
 
 ```
@@ -78,18 +81,29 @@ Körperdichte = 1.10938 - 0.0008267*S + 0.0000016*S^2 - 0.0002574*Alter
 Körperfett %  = (495 / Körperdichte) - 450   (Siri-Gleichung)
 ```
 
+**Frauen** (Sites: Trizeps, Suprailiac, Oberschenkel in mm).
+Quelle: Jackson, A.S., Pollock, M.L. & Ward, A. (1980), *Medicine & Science in Sports
+& Exercise*, 12(3), 175–181.
+
+```
+S = Trizeps + Suprailiac + Oberschenkel     (mm)
+Körperdichte = 1.0994921 - 0.0009929*S + 0.0000023*S^2 - 0.0001392*Alter
+Körperfett %  = (495 / Körperdichte) - 450   (Siri-Gleichung)
+```
+
 Hinweis im Code belassen: Bei sehr dicken Falten (>40–50 mm) liegt man ggf. außerhalb
 des validierten Bereichs → absoluter KFA mit Vorsicht, **Trend ist robust**. Das ist
-hier relevant (Ausgangsgewicht hoch). Implementiert ist nur das Männer-Protokoll; das
-Frauen-Protokoll (Trizeps/Suprailiac/Oberschenkel, andere Formel) ist als
-Erweiterungspunkt markiert.
+hier relevant (Ausgangsgewicht hoch). Die DB-Felder heißen aus Bestandsgründen
+`chest_mm/abdomen_mm/thigh_mm`; im Frauen-Protokoll stehen dort fachlich
+Trizeps/Suprailiac/Oberschenkel (App ist für **eine** Person mit festem Protokoll).
 
 ## CSV-Format (für den Arzt)
 
 Deutsches Excel-Format: Trennzeichen `;`, **Dezimalkomma**, UTF-8 **mit BOM**.
 
 - `blutdruck_<datum>.csv`: Datum; Systolisch; Diastolisch; Puls; Dosis_<MedA>_mg; Dosis_<MedB>_mg
-- `koerperfett_gewicht_<datum>.csv`: Datum; Gewicht_kg; Brust_mm; Bauch_mm; Oberschenkel_mm; Summe_mm; Alter; KFA_Prozent
+- `koerperfett_gewicht_<datum>.csv`: Datum; Gewicht_kg; <Site1>_mm; <Site2>_mm; Oberschenkel_mm; Summe_mm; Alter; KFA_Prozent
+  (Site1/Site2 protokollabhängig: Männer Brust/Bauch, Frauen Trizeps/Suprailiac)
 - `backup_<datum>.json`: Vollsicherung inkl. Fotos (Base64) zum Wiederherstellen.
 
 ## Konventionen

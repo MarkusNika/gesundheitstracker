@@ -68,8 +68,8 @@
       <fieldset>
         <legend>Hautfalten (3-Punkt, mm)</legend>
         <div class="row">
-          <label>Brust <input type="number" id="chest" inputmode="decimal" placeholder="mm" /></label>
-          <label>Bauch <input type="number" id="abdomen" inputmode="decimal" placeholder="mm" /></label>
+          <label><span id="fold1-label">Brust</span> <input type="number" id="chest" inputmode="decimal" placeholder="mm" /></label>
+          <label><span id="fold2-label">Bauch</span> <input type="number" id="abdomen" inputmode="decimal" placeholder="mm" /></label>
           <label>Oberschenkel <input type="number" id="thigh" inputmode="decimal" placeholder="mm" /></label>
         </div>
         <p id="weekly-preview" class="muted"></p>
@@ -155,7 +155,7 @@
       <label>Protokoll
         <select id="set-sex">
           <option value="male">Männer (Brust/Bauch/Oberschenkel)</option>
-          <option value="female" disabled>Frauen (noch nicht implementiert)</option>
+          <option value="female">Frauen (Trizeps/Suprailiac/Oberschenkel)</option>
         </select>
       </label>
       <label>Geburtsdatum (für Altersberechnung)
@@ -185,6 +185,7 @@
   <script src="entries-core.js"></script>
   <script src="photo-core.js"></script>
   <script src="range-core.js"></script>
+  <script src="bodyfat-core.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
