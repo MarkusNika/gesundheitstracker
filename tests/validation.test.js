@@ -55,6 +55,60 @@ test('validateDaily: unplausibel hohe Dosis warnt, blockiert aber nicht', () => 
   assert.ok(r.warnings.length > 0);
 });
 
+/* ---- Erweitertes Tages-Tracking: Abend-BP, Schritte, Befinden ---- */
+test('validateDaily: Abend-Blutdruck sys_e <= dia_e ist Fehler', () => {
+  assert.ok(v.validateDaily({ sys_e: 80, dia_e: 120 }).errors.some((e) => /abend/i.test(e)));
+  assert.ok(v.validateDaily({ sys_e: 100, dia_e: 100 }).errors.length > 0);
+});
+
+test('validateDaily: nicht-positiver Abend-Messwert ist Fehler', () => {
+  assert.ok(v.validateDaily({ sys_e: -1 }).errors.length > 0);
+  assert.ok(v.validateDaily({ pulse_e: 0 }).errors.length > 0);
+});
+
+test('validateDaily: normaler Abend-Blutdruck ist gültig', () => {
+  const r = v.validateDaily({ sys_e: 125, dia_e: 82, pulse_e: 68 });
+  assert.deepEqual(r.errors, []);
+  assert.deepEqual(r.warnings, []);
+});
+
+test('validateDaily: unplausibler Abend-BP warnt, blockiert nicht', () => {
+  const r = v.validateDaily({ sys_e: 1200, dia_e: 80 });
+  assert.deepEqual(r.errors, []);
+  assert.ok(r.warnings.length > 0);
+});
+
+test('validateDaily: Schritte negativ ist Fehler, 0 ist ok', () => {
+  assert.ok(v.validateDaily({ steps: -100 }).errors.length > 0);
+  assert.deepEqual(v.validateDaily({ steps: 0 }).errors, []);
+  assert.deepEqual(v.validateDaily({ steps: 7500 }).errors, []);
+});
+
+test('validateDaily: unplausibel hohe Schrittzahl warnt nur', () => {
+  const r = v.validateDaily({ steps: 200000 });
+  assert.deepEqual(r.errors, []);
+  assert.ok(r.warnings.length > 0);
+});
+
+test('validateDaily: Energie/Libido müssen ganze Zahl 1..10 sein', () => {
+  assert.deepEqual(v.validateDaily({ energy: 7, libido: 3 }).errors, []);
+  assert.ok(v.validateDaily({ energy: 0 }).errors.length > 0);
+  assert.ok(v.validateDaily({ libido: 11 }).errors.length > 0);
+  assert.ok(v.validateDaily({ energy: 5.5 }).errors.length > 0);
+});
+
+test('validateDaily: Schlafdauer außerhalb 0..24 h ist Fehler', () => {
+  assert.ok(v.validateDaily({ sleep_h: -1 }).errors.length > 0);
+  assert.ok(v.validateDaily({ sleep_h: 25 }).errors.length > 0);
+  assert.deepEqual(v.validateDaily({ sleep_h: 7.5 }).errors, []);
+});
+
+test('validateDaily: ungewöhnliche (aber mögliche) Schlafdauer warnt nur', () => {
+  const r = v.validateDaily({ sleep_h: 1 });
+  assert.deepEqual(r.errors, []);
+  assert.ok(r.warnings.length > 0);
+});
+
 /* ===================== validateWeekly ===================== */
 test('validateWeekly: leere Eingabe ist gültig', () => {
   const r = v.validateWeekly({ weight_kg: null, chest_mm: null, abdomen_mm: null, thigh_mm: null });

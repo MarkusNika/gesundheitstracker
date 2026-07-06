@@ -32,7 +32,13 @@
     med_mg: [0, 5000],   // mg je Dosis
     weight_kg: [20, 400],// kg
     fold_mm: [2, 100],   // mm je Hautfalte
+    steps: [0, 60000],   // Schritte/Tag (0 erlaubt; darüber Tippfehler-Verdacht)
   };
+
+  // Plausibles Band für Schlafdauer in Stunden. Außerhalb -> nur Hinweis
+  // (sehr kurz/lang ist ungewöhnlich, aber nicht unmöglich). 0..24 h ist die
+  // harte Grenze (siehe validateDaily).
+  const SLEEP_BAND = [3, 14]; // Stunden
 
   // Schwelle, ab der eine einzelne Hautfalte als "sehr dick" gilt. Laut CLAUDE.md
   // liegt man bei >40-50 mm ggf. außerhalb des validierten Jackson-Pollock-Bereichs.
@@ -85,6 +91,41 @@
         errors.push(`${label}: darf nicht negativ sein.`);
       } else if (w < BANDS.med_mg[0] || w > BANDS.med_mg[1]) {
         warnings.push(`${label}: ${zahl(w)} mg wirkt unplausibel — bitte auf Tippfehler prüfen.`);
+      }
+    }
+
+    // Abend-Blutdruck: gleiche Regeln wie morgens (Felder mit Suffix _e).
+    pruefeMesswert(rec.sys_e, BANDS.sys, 'Systolisch (abends)', errors, warnings);
+    pruefeMesswert(rec.dia_e, BANDS.dia, 'Diastolisch (abends)', errors, warnings);
+    pruefeMesswert(rec.pulse_e, BANDS.pulse, 'Puls (abends)', errors, warnings);
+    if (erfasst(rec.sys_e) && erfasst(rec.dia_e) && rec.sys_e <= rec.dia_e) {
+      errors.push('Systolisch (abends) muss größer als diastolisch sein (Werte evtl. vertauscht).');
+    }
+
+    // Schritte: 0 ist erlaubt (Ruhetag), negativ nicht; sehr hoch -> Tippfehler-Hinweis.
+    if (erfasst(rec.steps)) {
+      if (rec.steps < 0) {
+        errors.push('Schritte: dürfen nicht negativ sein.');
+      } else if (rec.steps > BANDS.steps[1]) {
+        warnings.push(`Schritte: ${zahl(rec.steps)} wirkt unplausibel — bitte auf Tippfehler prüfen.`);
+      }
+    }
+
+    // Befinden Energie & Libido: subjektive Skala, ganze Zahl von 1 bis 10.
+    for (const [feld, label] of [['energy', 'Energie'], ['libido', 'Libido']]) {
+      const w = rec[feld];
+      if (!erfasst(w)) continue;
+      if (!Number.isInteger(w) || w < 1 || w > 10) {
+        errors.push(`${label}: bitte einen ganzen Wert von 1 bis 10 angeben.`);
+      }
+    }
+
+    // Schlafdauer in Stunden: 0..24 ist die harte Grenze, außerhalb 3..14 nur Hinweis.
+    if (erfasst(rec.sleep_h)) {
+      if (rec.sleep_h < 0 || rec.sleep_h > 24) {
+        errors.push('Schlaf: bitte eine Dauer zwischen 0 und 24 Stunden angeben.');
+      } else if (rec.sleep_h < SLEEP_BAND[0] || rec.sleep_h > SLEEP_BAND[1]) {
+        warnings.push(`Schlaf: ${zahl(rec.sleep_h)} h wirkt ungewöhnlich — bitte prüfen.`);
       }
     }
 

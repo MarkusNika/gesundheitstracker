@@ -24,7 +24,7 @@
       </label>
 
       <fieldset>
-        <legend>Blutdruck</legend>
+        <legend>Blutdruck morgens</legend>
         <div class="row">
           <label>Systolisch <input type="number" id="sys" inputmode="numeric" placeholder="mmHg" /></label>
           <label>Diastolisch <input type="number" id="dia" inputmode="numeric" placeholder="mmHg" /></label>
@@ -33,10 +33,39 @@
       </fieldset>
 
       <fieldset>
-        <legend>Medikamente</legend>
+        <legend>Blutdruck abends</legend>
         <div class="row">
-          <label><span id="medA-label">Medikament A</span> <input type="number" id="medA" inputmode="decimal" placeholder="mg" /></label>
-          <label><span id="medB-label">Medikament B</span> <input type="number" id="medB" inputmode="decimal" placeholder="mg" /></label>
+          <label>Systolisch <input type="number" id="sys-e" inputmode="numeric" placeholder="mmHg" /></label>
+          <label>Diastolisch <input type="number" id="dia-e" inputmode="numeric" placeholder="mmHg" /></label>
+          <label>Puls <input type="number" id="pulse-e" inputmode="numeric" placeholder="/min" /></label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Medikamente</legend>
+        <div class="med-row">
+          <span class="med-name" id="medA-label">Medikament A</span>
+          <label class="med-dose">Dosis <input type="number" id="medA" inputmode="decimal" placeholder="mg" /></label>
+          <label class="med-check"><input type="checkbox" id="medA-am" /> morgens</label>
+          <label class="med-check"><input type="checkbox" id="medA-pm" /> abends</label>
+        </div>
+        <div class="med-row">
+          <span class="med-name" id="medB-label">Medikament B</span>
+          <label class="med-dose">Dosis <input type="number" id="medB" inputmode="decimal" placeholder="mg" /></label>
+          <label class="med-check"><input type="checkbox" id="medB-am" /> morgens</label>
+          <label class="med-check"><input type="checkbox" id="medB-pm" /> abends</label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Schritte &amp; Befinden</legend>
+        <div class="row">
+          <label>Schritte <input type="number" id="steps" inputmode="numeric" placeholder="Anzahl" /></label>
+          <label>Schlaf (h) <input type="number" id="sleep" inputmode="decimal" placeholder="Stunden" /></label>
+        </div>
+        <div class="row">
+          <label>Energie (1–10) <input type="number" id="energy" inputmode="numeric" min="1" max="10" placeholder="1–10" /></label>
+          <label>Libido (1–10) <input type="number" id="libido" inputmode="numeric" min="1" max="10" placeholder="1–10" /></label>
         </div>
       </fieldset>
 

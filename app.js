@@ -62,11 +62,25 @@ async function loadDaily() {
   $('#medA-label').textContent = cfg.medA || 'Medikament A';
   $('#medB-label').textContent = cfg.medB || 'Medikament B';
   const rec = await DB.get('daily', date);
+  // Blutdruck morgens (Bestandsfelder sys/dia/pulse) + abends (…_e)
   $('#sys').value = rec?.sys ?? '';
   $('#dia').value = rec?.dia ?? '';
   $('#pulse').value = rec?.pulse ?? '';
+  $('#sys-e').value = rec?.sys_e ?? '';
+  $('#dia-e').value = rec?.dia_e ?? '';
+  $('#pulse-e').value = rec?.pulse_e ?? '';
+  // Medikamente: Dosis (mg) + je zwei "genommen"-Checkboxen (morgens/abends)
   $('#medA').value = rec?.medA_mg ?? '';
   $('#medB').value = rec?.medB_mg ?? '';
+  $('#medA-am').checked = !!rec?.medA_am;
+  $('#medA-pm').checked = !!rec?.medA_pm;
+  $('#medB-am').checked = !!rec?.medB_am;
+  $('#medB-pm').checked = !!rec?.medB_pm;
+  // Schritte & Befinden
+  $('#steps').value = rec?.steps ?? '';
+  $('#energy').value = rec?.energy ?? '';
+  $('#libido').value = rec?.libido ?? '';
+  $('#sleep').value = rec?.sleep_h ?? '';
   $('#food').value = rec?.food ?? '';
   $('#protocol').value = rec?.protocol ?? '';
 }
@@ -74,11 +88,25 @@ async function saveDaily() {
   const date = $('#daily-date').value || todayISO();
   const rec = {
     date,
+    // Blutdruck morgens (Bestandsfelder) + abends
     sys: num($('#sys').value),
     dia: num($('#dia').value),
     pulse: num($('#pulse').value),
+    sys_e: num($('#sys-e').value),
+    dia_e: num($('#dia-e').value),
+    pulse_e: num($('#pulse-e').value),
+    // Medikamente: Dosis + Einnahme-Checkboxen (true = genommen)
     medA_mg: num($('#medA').value),
     medB_mg: num($('#medB').value),
+    medA_am: $('#medA-am').checked,
+    medA_pm: $('#medA-pm').checked,
+    medB_am: $('#medB-am').checked,
+    medB_pm: $('#medB-pm').checked,
+    // Schritte & Befinden
+    steps: num($('#steps').value),
+    energy: num($('#energy').value),
+    libido: num($('#libido').value),
+    sleep_h: num($('#sleep').value),
     food: $('#food').value.trim(),
     protocol: $('#protocol').value.trim(),
   };
@@ -312,12 +340,17 @@ async function renderCharts() {
   const weekly = GTRange.filterByRange(await DB.getAll('weekly'), cutoff)
     .sort((a, b) => a.date.localeCompare(b.date));
 
-  // Blutdruck
+  // Blutdruck: morgens durchgezogen, abends gestrichelt (gleiche Farbe je Größe).
+  // Einzelne Linien lassen sich über die Chart.js-Legende ein-/ausblenden.
   const bpLabels = daily.map((d) => d.date);
+  const dash = [5, 4];
   makeChart('chart-bp', [
-    { label: 'Systolisch', data: daily.map((d) => d.sys), borderColor: '#dc2626', tension: 0.2, spanGaps: true },
-    { label: 'Diastolisch', data: daily.map((d) => d.dia), borderColor: '#2563eb', tension: 0.2, spanGaps: true },
-    { label: 'Puls', data: daily.map((d) => d.pulse), borderColor: '#16a34a', tension: 0.2, spanGaps: true },
+    { label: 'Sys morgens', data: daily.map((d) => d.sys), borderColor: '#dc2626', tension: 0.2, spanGaps: true },
+    { label: 'Sys abends', data: daily.map((d) => d.sys_e), borderColor: '#dc2626', borderDash: dash, tension: 0.2, spanGaps: true },
+    { label: 'Dia morgens', data: daily.map((d) => d.dia), borderColor: '#2563eb', tension: 0.2, spanGaps: true },
+    { label: 'Dia abends', data: daily.map((d) => d.dia_e), borderColor: '#2563eb', borderDash: dash, tension: 0.2, spanGaps: true },
+    { label: 'Puls morgens', data: daily.map((d) => d.pulse), borderColor: '#16a34a', tension: 0.2, spanGaps: true },
+    { label: 'Puls abends', data: daily.map((d) => d.pulse_e), borderColor: '#16a34a', borderDash: dash, tension: 0.2, spanGaps: true },
   ], bpLabels);
 
   // Gewicht
@@ -335,6 +368,8 @@ async function renderCharts() {
 /* ---------- Export ---------- */
 const SEP = ';'; // deutsches Excel-Format
 function deNum(v) { return v == null ? '' : String(v).replace('.', ','); }
+// Boolean fürs Arzt-CSV: 'ja'/'nein'; leer, wenn nie erfasst (z. B. Altdaten).
+function jaNein(v) { return v == null ? '' : (v ? 'ja' : 'nein'); }
 function download(filename, text, mime) {
   const blob = new Blob(['\uFEFF' + text], { type: (mime || 'text/csv') + ';charset=utf-8' });
   const a = document.createElement('a');
@@ -345,10 +380,26 @@ function download(filename, text, mime) {
 async function exportBP() {
   const rows = (await DB.getAll('daily')).sort((a, b) => a.date.localeCompare(b.date));
   const cfg = await DB.getConfig();
-  const head = ['Datum', 'Systolisch', 'Diastolisch', 'Puls', `Dosis_${(cfg.medA||'MedA')}_mg`, `Dosis_${(cfg.medB||'MedB')}_mg`];
+  const mA = cfg.medA || 'MedA';
+  const mB = cfg.medB || 'MedB';
+  const head = [
+    'Datum',
+    'Sys_morgens', 'Dia_morgens', 'Puls_morgens',
+    'Sys_abends', 'Dia_abends', 'Puls_abends',
+    'Schritte',
+    `Dosis_${mA}_mg`, `${mA}_morgens`, `${mA}_abends`,
+    `Dosis_${mB}_mg`, `${mB}_morgens`, `${mB}_abends`,
+  ];
   const lines = [head.join(SEP)];
   for (const r of rows)
-    lines.push([r.date, deNum(r.sys), deNum(r.dia), deNum(r.pulse), deNum(r.medA_mg), deNum(r.medB_mg)].join(SEP));
+    lines.push([
+      r.date,
+      deNum(r.sys), deNum(r.dia), deNum(r.pulse),
+      deNum(r.sys_e), deNum(r.dia_e), deNum(r.pulse_e),
+      deNum(r.steps),
+      deNum(r.medA_mg), jaNein(r.medA_am), jaNein(r.medA_pm),
+      deNum(r.medB_mg), jaNein(r.medB_am), jaNein(r.medB_pm),
+    ].join(SEP));
   download(`blutdruck_${todayISO()}.csv`, lines.join('\r\n'));
 }
 async function exportBodyComp() {

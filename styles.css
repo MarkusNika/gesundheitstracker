@@ -81,6 +81,17 @@ button.primary { background: var(--primary); color: var(--primary-ink); border-c
 .radio { display: flex; gap: 8px; align-items: flex-start; margin-bottom: 10px; cursor: pointer; }
 .radio input[type="radio"] { width: auto; margin: 2px 0 0; flex: 0 0 auto; }
 
+/* Medikamenten-Zeile: Name (volle Breite), dann Dosisfeld + zwei "genommen"-
+ * Checkboxen nebeneinander. Checkboxen müssen die globale input{width:100%}-Regel
+ * überschreiben, sonst würden sie die ganze Zeile einnehmen. */
+.med-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin-bottom: 12px; }
+.med-row + .med-row { border-top: 1px solid var(--line); padding-top: 12px; }
+.med-name { flex: 0 0 100%; font-weight: 600; color: var(--ink); }
+.med-dose { display: flex; align-items: center; gap: 6px; margin: 0; }
+.med-dose input { width: 90px; margin-top: 0; }
+.med-check { display: flex; align-items: center; gap: 6px; margin: 0; color: var(--ink); cursor: pointer; }
+.med-check input[type="checkbox"] { width: auto; margin: 0; flex: 0 0 auto; }
+
 hr { border: none; border-top: 1px solid var(--line); margin: 20px 0; }
 
 /* Statusmeldungen. Standard grün (ok); Validierung setzt warn/error zusätzlich.
