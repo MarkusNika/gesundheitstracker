@@ -204,10 +204,10 @@ async function renderWeeklyList() {
   renderEntryList($('#weekly-list'), rows, GTEntries.summarizeWeekly, 'weekly');
 }
 
-// Gemeinsame Darstellung beider Listen. `kind` ('daily'|'weekly') steuert, welches
-// Datumsfeld und welche Lade-Funktion beim Bearbeiten/Löschen benutzt werden.
-// Hinweis zur Sicherheit: In die Zeilen fließt nur Datum + die in entries-core
-// erzeugte Zusammenfassung (kein freier Nutzertext) -> innerHTML hier unkritisch.
+// Gemeinsame Darstellung der Listen. `kind` ('daily'|'weekly'|'training') steuert,
+// welches Datumsfeld und welche Lade-Funktion beim Bearbeiten/Löschen benutzt werden.
+// Bewusst über textContent statt innerHTML aufgebaut: die Trainings-Zusammenfassung
+// enthält freien Übungstext -> so kann kein eingegebenes Markup ausgeführt werden.
 function renderEntryList(box, rows, summarize, kind) {
   box.innerHTML = '';
   if (!rows.length) {
@@ -217,27 +217,40 @@ function renderEntryList(box, rows, summarize, kind) {
   for (const rec of rows) {
     const li = document.createElement('li');
     li.className = 'entry';
-    li.innerHTML =
-      `<button class="entry-main" data-date="${rec.date}" type="button">` +
-        `<span class="entry-date">${GTEntries.formatDateDE(rec.date)}</span>` +
-        `<span class="entry-sum">${summarize(rec)}</span>` +
-      `</button>` +
-      `<button class="entry-del" data-date="${rec.date}" type="button">löschen</button>`;
+
+    const main = document.createElement('button');
+    main.type = 'button';
+    main.className = 'entry-main';
+    const datum = document.createElement('span');
+    datum.className = 'entry-date';
+    datum.textContent = GTEntries.formatDateDE(rec.date);
+    const summe = document.createElement('span');
+    summe.className = 'entry-sum';
+    summe.textContent = summarize(rec);
+    main.append(datum, summe);
+    main.addEventListener('click', () => editEntry(kind, rec.date));
+
+    const del = document.createElement('button');
+    del.type = 'button';
+    del.className = 'entry-del';
+    del.textContent = 'löschen';
+    del.addEventListener('click', () => deleteEntry(kind, rec.date));
+
+    li.append(main, del);
     box.appendChild(li);
   }
-  box.querySelectorAll('.entry-main').forEach((b) =>
-    b.addEventListener('click', () => editEntry(kind, b.dataset.date)));
-  box.querySelectorAll('.entry-del').forEach((b) =>
-    b.addEventListener('click', () => deleteEntry(kind, b.dataset.date)));
 }
 
 async function editEntry(kind, date) {
   if (kind === 'daily') {
     $('#daily-date').value = date;
     await loadDaily();
-  } else {
+  } else if (kind === 'weekly') {
     $('#weekly-date').value = date;
     await loadWeekly();
+  } else if (kind === 'training') {
+    $('#training-date').value = date;
+    await loadTraining();
   }
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -245,16 +258,100 @@ async function editEntry(kind, date) {
 async function deleteEntry(kind, date) {
   const label = GTEntries.formatDateDE(date);
   if (!confirm(`Eintrag vom ${label} wirklich löschen? Das lässt sich nicht rückgängig machen.`)) return;
-  await DB.remove(kind, date); // Store-Name == kind ('daily' / 'weekly')
+  await DB.remove(kind, date); // Store-Name == kind ('daily' / 'weekly' / 'training')
   // Liste neu zeichnen; war der gelöschte Datensatz gerade im Formular geladen,
   // Formular ebenfalls neu laden (zeigt dann leere Felder für dieses Datum).
   if (kind === 'daily') {
     await renderDailyList();
     if ($('#daily-date').value === date) await loadDaily();
-  } else {
+  } else if (kind === 'weekly') {
     await renderWeeklyList();
     if ($('#weekly-date').value === date) await loadWeekly();
+  } else if (kind === 'training') {
+    await renderTrainingList();
+    if ($('#training-date').value === date) await loadTraining();
   }
+}
+
+/* ---------- Training ----------
+ * Ein Trainings-Datensatz pro Tag (Store 'training', keyPath 'date') hält eine
+ * Liste von Übungen. Der Nutzer stellt die Übungsliste für einen Tag zusammen
+ * (hinzufügen/entfernen) und speichert sie dann als Ganzes. Reine Logik
+ * (formatExercise, summarizeSession, validateExercise, Presets) liegt im
+ * getesteten Modul training-core.js (window.GTTraining).
+ */
+let trainingDraft = []; // Übungen des aktuell bearbeiteten Tages (vor dem Speichern)
+
+async function loadTraining() {
+  const date = $('#training-date').value || todayISO();
+  $('#training-date').value = date;
+  const rec = await DB.get('training', date);
+  trainingDraft = rec && Array.isArray(rec.exercises) ? rec.exercises.slice() : [];
+  $('#training-note').value = rec?.note ?? '';
+  renderExerciseDraft();
+}
+
+// Zeigt die aktuell zusammengestellten Übungen (noch nicht zwingend gespeichert).
+// Über textContent aufgebaut, weil der Übungsname freier Nutzertext ist.
+function renderExerciseDraft() {
+  const box = $('#training-exercises');
+  box.innerHTML = '';
+  if (!trainingDraft.length) {
+    box.innerHTML = '<li class="muted entry-empty">Noch keine Übung hinzugefügt.</li>';
+    return;
+  }
+  trainingDraft.forEach((ex, i) => {
+    const li = document.createElement('li');
+    li.className = 'ex-item';
+    const span = document.createElement('span');
+    span.textContent = GTTraining.formatExercise(ex);
+    const del = document.createElement('button');
+    del.type = 'button';
+    del.className = 'entry-del';
+    del.textContent = 'entfernen';
+    del.addEventListener('click', () => { trainingDraft.splice(i, 1); renderExerciseDraft(); });
+    li.append(span, del);
+    box.appendChild(li);
+  });
+}
+
+// Übung aus den Eingabefeldern zur Entwurfsliste hinzufügen (mit Validierung).
+function addExercise() {
+  const ex = {
+    name: $('#ex-name').value.trim(),
+    sets: num($('#ex-sets').value),
+    reps: num($('#ex-reps').value),
+    duration_min: num($('#ex-duration').value),
+    difficulty: num($('#ex-difficulty').value),
+  };
+  const check = GTTraining.validateExercise(ex);
+  if (check.errors.length) {
+    flash('#ex-status', '⚠ ' + check.errors.join(' '), 6000, 'error');
+    return; // NICHT hinzufügen
+  }
+  trainingDraft.push(ex);
+  renderExerciseDraft();
+  if (check.warnings.length) {
+    flash('#ex-status', 'Hinzugefügt — Hinweis: ' + check.warnings.join(' '), 6000, 'warn');
+  } else {
+    flash('#ex-status', 'Hinzugefügt ✓');
+  }
+  // Eingabefelder leeren, Fokus zurück aufs Namensfeld für die nächste Übung.
+  ['#ex-name', '#ex-sets', '#ex-reps', '#ex-duration', '#ex-difficulty'].forEach((s) => { $(s).value = ''; });
+  $('#ex-name').focus();
+}
+
+async function saveTraining() {
+  const date = $('#training-date').value || todayISO();
+  const rec = { date, exercises: trainingDraft, note: $('#training-note').value.trim() };
+  await DB.put('training', rec);
+  await renderTrainingList();
+  flash('#training-status', 'Gespeichert ✓');
+}
+
+async function renderTrainingList() {
+  const rows = GTEntries.sortByDateDesc(await DB.getAll('training'));
+  renderEntryList($('#training-list'), rows, GTTraining.summarizeSession, 'training');
 }
 
 /* ---------- Fotos (monatlich) ----------
@@ -420,13 +517,14 @@ async function exportBackup() {
   const daily = await DB.getAll('daily');
   const weekly = await DB.getAll('weekly');
   const settings = await DB.getAll('settings');
+  const training = await DB.getAll('training');
   const photosRaw = await DB.getAll('photos');
   const photos = [];
   for (const p of photosRaw) {
     const b64 = await blobToBase64(p.blob);
     photos.push({ id: p.id, month: p.month, created: p.created, type: p.blob.type, data: b64 });
   }
-  const dump = { version: 1, exportedAt: new Date().toISOString(), daily, weekly, settings, photos };
+  const dump = { version: 1, exportedAt: new Date().toISOString(), daily, weekly, settings, photos, training };
   download(`backup_${todayISO()}.json`, JSON.stringify(dump, null, 2), 'application/json');
 }
 function blobToBase64(blob) {
@@ -475,8 +573,9 @@ async function importBackup(file) {
     );
     if (!ok) { flash('#import-status', 'Abgebrochen.'); return; }
 
-    // Reihenfolge egal; jeder Store wird komplett geleert.
+    // Reihenfolge egal; jeder Store wird komplett geleert (inkl. optionaler Stores).
     for (const store of GTImport.STORES) await DB.clear(store);
+    for (const store of GTImport.OPTIONAL_STORES) await DB.clear(store);
   }
 
   // 4) Datensätze schreiben. daily/weekly/settings haben feste keyPaths
@@ -484,6 +583,8 @@ async function importBackup(file) {
   for (const rec of obj.daily) await DB.put('daily', rec);
   for (const rec of obj.weekly) await DB.put('weekly', rec);
   for (const rec of obj.settings) await DB.put('settings', rec);
+  // Training: optionaler Store, kann in älteren Backups fehlen (dann leeres Array).
+  for (const rec of (obj.training || [])) await DB.put('training', rec);
 
   // 5) Fotos gesondert: Base64 -> Blob, und Duplikate (month+created) überspringen.
   //    Im 'replace'-Modus sind die Stores leer -> nichts gilt als Duplikat.
@@ -499,14 +600,17 @@ async function importBackup(file) {
   await loadSettings();
   await loadDaily();
   await loadWeekly();
+  await loadTraining();
   await renderDailyList();
   await renderWeeklyList();
+  await renderTrainingList();
 
   const skipHinweis = skipped > 0 ? `, ${skipped} Foto(s) übersprungen` : '';
+  const trainingN = (obj.training || []).length;
   flash(
     '#import-status',
     `Wiederhergestellt: ${obj.daily.length} Tage, ${obj.weekly.length} Wochen, ` +
-    `${toAdd.length} Foto(s)${skipHinweis} ✓`,
+    `${trainingN} Training(s), ${toAdd.length} Foto(s)${skipHinweis} ✓`,
     6000
   );
 }
@@ -572,11 +676,17 @@ async function init() {
   $('#daily-date').value = todayISO();
   $('#weekly-date').value = todayISO();
   $('#photo-month').value = GTPhoto.defaultPhotoMonth(todayISO());
+  $('#training-date').value = todayISO();
+  // Übungs-Vorschläge (Presets) in die datalist des Namensfeldes einhängen.
+  const preDl = $('#ex-presets');
+  GTTraining.PRESET_EXERCISES.forEach((n) => { const o = document.createElement('option'); o.value = n; preDl.appendChild(o); });
   await loadSettings();
   await loadDaily();
   await loadWeekly();
+  await loadTraining();
   await renderDailyList();
   await renderWeeklyList();
+  await renderTrainingList();
 
   $('#daily-date').addEventListener('change', loadDaily);
   $('#save-daily').addEventListener('click', saveDaily);
@@ -586,6 +696,11 @@ async function init() {
   ['#chest', '#abdomen', '#thigh'].forEach((s) => $(s).addEventListener('input', updateWeeklyPreview));
 
   $('#photo-input').addEventListener('change', (e) => addPhoto(e.target.files[0]));
+
+  // Training: Datumswechsel lädt den Tag, Buttons für Übung-Hinzufügen/Speichern.
+  $('#training-date').addEventListener('change', loadTraining);
+  $('#add-exercise').addEventListener('click', addExercise);
+  $('#save-training').addEventListener('click', saveTraining);
 
   // Zeitraumfilter der Charts: bei Auswahländerung neu zeichnen.
   $('#range-select').addEventListener('change', renderCharts);

@@ -10,7 +10,7 @@
  */
 (function () {
   const DB_NAME = 'gesundheitstracker';
-  const DB_VERSION = 1;
+  const DB_VERSION = 2; // v2: Store 'training' ergänzt
   let dbPromise = null;
 
   function open() {
@@ -27,6 +27,9 @@
           db.createObjectStore('photos', { keyPath: 'id', autoIncrement: true });
         if (!db.objectStoreNames.contains('settings'))
           db.createObjectStore('settings', { keyPath: 'key' });
+        // v2: ein Trainings-Datensatz pro Tag (hält eine Übungsliste).
+        if (!db.objectStoreNames.contains('training'))
+          db.createObjectStore('training', { keyPath: 'date' });
       };
       req.onsuccess = () => resolve(req.result);
       req.onerror = () => reject(req.error);

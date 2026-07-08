@@ -74,6 +74,24 @@ test('validateBackup sammelt mehrere Fehler gleichzeitig', () => {
   assert.ok(r.errors.length >= 2);
 });
 
+test('validateBackup: fehlendes optionales "training" ist ok (altes Backup)', () => {
+  const r = core.validateBackup(gueltigesBackup()); // ohne training-Feld
+  assert.equal(r.ok, true);
+  assert.equal(r.counts.training, undefined); // nicht gezählt, weil nicht vorhanden
+});
+
+test('validateBackup: vorhandenes "training" wird geprüft und gezählt', () => {
+  const r = core.validateBackup(gueltigesBackup({ training: [{ date: '2026-07-06', exercises: [] }] }));
+  assert.equal(r.ok, true);
+  assert.equal(r.counts.training, 1);
+});
+
+test('validateBackup: "training" als Nicht-Array ist Fehler', () => {
+  const r = core.validateBackup(gueltigesBackup({ training: { kein: 'array' } }));
+  assert.equal(r.ok, false);
+  assert.ok(r.errors.some((e) => e.includes('training')));
+});
+
 /* ===================== base64ToBlob ===================== */
 test('base64ToBlob erzeugt einen Blob mit korrekter Größe und Typ', async () => {
   // "Hi" -> Base64 "SGk="

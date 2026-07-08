@@ -139,6 +139,19 @@ canvas { background: var(--card); border: 1px solid var(--line); border-radius: 
 .entry-sum { font-size: 0.85rem; color: var(--muted); }
 .entry-del { flex: 0 0 auto; font-size: 0.85rem; color: #dc2626; }
 
+/* Übungs-Entwurfsliste im Training-Screen (Übungen vor dem Speichern). */
+.ex-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 8px 12px;
+}
+.ex-item span { flex: 1; font-size: 0.9rem; }
+
 .tabbar {
   position: fixed;
   bottom: 0; left: 0; right: 0;

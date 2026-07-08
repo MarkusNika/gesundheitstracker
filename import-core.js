@@ -19,9 +19,13 @@
 (function (global) {
   'use strict';
 
-  /* Die vier Object-Stores, die eine Vollsicherung enthält. Reihenfolge egal,
-   * aber alle müssen als Array vorliegen (so schreibt sie exportBackup()). */
+  /* Die vier Pflicht-Stores, die eine Vollsicherung immer enthält. Reihenfolge
+   * egal, aber alle müssen als Array vorliegen (so schreibt sie exportBackup()). */
   const STORES = ['daily', 'weekly', 'settings', 'photos'];
+
+  /* Später ergänzte Stores. Dürfen in älteren Backups fehlen (Rückwärts-
+   * kompatibilität), müssen aber ein Array sein, wenn sie vorhanden sind. */
+  const OPTIONAL_STORES = ['training'];
 
   /**
    * Prüft, ob ein eingelesenes JSON-Objekt eine gültige Vollsicherung ist.
@@ -48,13 +52,25 @@
       errors.push('Unbekannte oder fehlende Backup-Version (erwartet: 1).');
     }
 
-    // 3) Jeder Store muss als Array vorhanden sein.
+    // 3) Jeder Pflicht-Store muss als Array vorhanden sein.
     const counts = {};
     for (const store of STORES) {
       if (!Array.isArray(obj[store])) {
         errors.push(`Feld "${store}" fehlt oder ist kein Array.`);
       } else {
         counts[store] = obj[store].length;
+      }
+    }
+
+    // 4) Optionale Stores: erst später eingeführt, dürfen in alten Backups fehlen.
+    //    Wenn vorhanden, müssen sie aber ein Array sein.
+    for (const store of OPTIONAL_STORES) {
+      if (store in obj) {
+        if (!Array.isArray(obj[store])) {
+          errors.push(`Feld "${store}" ist kein Array.`);
+        } else {
+          counts[store] = obj[store].length;
+        }
       }
     }
 
@@ -117,7 +133,7 @@
   }
 
   /* ---- Öffentliche Schnittstelle in beiden Umgebungen bereitstellen ---- */
-  const api = { validateBackup, base64ToBlob, photoKey, partitionPhotos, STORES };
+  const api = { validateBackup, base64ToBlob, photoKey, partitionPhotos, STORES, OPTIONAL_STORES };
 
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = api; // Node (Tests)

@@ -126,6 +126,46 @@
       <div id="photo-list" class="photo-list"></div>
     </section>
 
+    <!-- TRAINING -->
+    <section id="view-training" class="view">
+      <h2>Training</h2>
+      <label>Datum
+        <input type="date" id="training-date" />
+      </label>
+
+      <fieldset>
+        <legend>Übung hinzufügen</legend>
+        <label>Übung
+          <input type="text" id="ex-name" list="ex-presets" placeholder="Name der Übung" autocomplete="off" />
+          <datalist id="ex-presets"></datalist>
+        </label>
+        <div class="row">
+          <label>Sätze <input type="number" id="ex-sets" inputmode="numeric" placeholder="Anzahl" /></label>
+          <label>Wdh. <input type="number" id="ex-reps" inputmode="numeric" placeholder="pro Satz" /></label>
+        </div>
+        <div class="row">
+          <label>Dauer (min) <input type="number" id="ex-duration" inputmode="decimal" placeholder="min" /></label>
+          <label>Schwierigkeit (1–10) <input type="number" id="ex-difficulty" inputmode="numeric" min="1" max="10" placeholder="1–10" /></label>
+        </div>
+        <button id="add-exercise" type="button">+ Übung zur Liste</button>
+        <span id="ex-status" class="status"></span>
+      </fieldset>
+
+      <ul id="training-exercises" class="entry-list"></ul>
+
+      <label>Notiz zum Training
+        <textarea id="training-note" rows="2" placeholder="Wie lief es? Besonderheiten ..."></textarea>
+      </label>
+
+      <button id="save-training" class="primary">Training speichern</button>
+      <span id="training-status" class="status"></span>
+
+      <div class="entry-list-box">
+        <h3>Bisherige Trainings</h3>
+        <ul id="training-list" class="entry-list"></ul>
+      </div>
+    </section>
+
     <!-- VERLAUF -->
     <section id="view-verlauf" class="view">
       <h2>Verlauf</h2>
@@ -201,6 +241,7 @@
     <button class="tab" data-view="view-heute">Heute</button>
     <button class="tab" data-view="view-woche">Woche</button>
     <button class="tab" data-view="view-fotos">Fotos</button>
+    <button class="tab" data-view="view-training">Training</button>
     <button class="tab" data-view="view-verlauf">Verlauf</button>
     <button class="tab" data-view="view-export">Export</button>
     <button class="tab" data-view="view-einstellungen">⚙︎</button>
@@ -215,6 +256,7 @@
   <script src="photo-core.js"></script>
   <script src="range-core.js"></script>
   <script src="bodyfat-core.js"></script>
+  <script src="training-core.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

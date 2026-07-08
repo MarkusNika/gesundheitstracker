@@ -1,7 +1,7 @@
 /* sw.js — einfaches App-Shell-Caching (Cache-first für statische Dateien).
  * Bei Änderungen am App-Shell CACHE-Version hochzählen, damit der SW aktualisiert.
  */
-const CACHE = 'gt-shell-v9';
+const CACHE = 'gt-shell-v10';
 const ASSETS = [
   './',
   './index.html',
@@ -13,6 +13,7 @@ const ASSETS = [
   './photo-core.js',
   './range-core.js',
   './bodyfat-core.js',
+  './training-core.js',
   './app.js',
   './vendor/chart.umd.min.js',
   './manifest.webmanifest',
