@@ -22,11 +22,29 @@
   'use strict';
 
   // Die drei Heimübungen des Nutzers als Vorbelegung (frei erweiterbar im UI).
+  // `type` steuert die Erfassungsart:
+  //   'hold' = Halteübung (Haltezeit in Minuten wichtig)
+  //   'reps' = Wiederholungsübung (Sätze × Wiederholungen)
+  // Optionale Felder (z. B. duration_min) sind Startziele, die beim Auswählen der
+  // Übung ins Formular vorgeschlagen werden. Für die Wiederholungsübungen sind
+  // KEINE Zahlen hinterlegt (keine erfundenen Zielwerte) — der Nutzer trägt sie ein.
   const PRESET_EXERCISES = [
-    'Umarmung des großen Baums',
-    'Rückenheben aus Bauchlage',
-    'Beine heben aus Rückenlage',
+    { name: 'Umarmung des großen Baums', type: 'hold', duration_min: 5 }, // Startziel 5 min
+    { name: 'Rückenheben aus Bauchlage', type: 'reps' },
+    { name: 'Beine heben aus Rückenlage', type: 'reps' },
   ];
+
+  /**
+   * Sucht ein Preset per Name (Groß/Klein und Randleerzeichen egal).
+   * @param {string} name
+   * @returns {object|null} das Preset-Objekt oder null
+   */
+  function findPreset(name) {
+    if (!name || typeof name !== 'string') return null;
+    const key = name.trim().toLowerCase();
+    if (!key) return null;
+    return PRESET_EXERCISES.find((p) => p.name.toLowerCase() === key) || null;
+  }
 
   /* ---------- kleine Helfer ---------- */
   const erfasst = (x) => x !== null && x !== undefined && x !== '';
@@ -103,7 +121,7 @@
   }
 
   /* ---- Öffentliche Schnittstelle in beiden Umgebungen ---- */
-  const api = { PRESET_EXERCISES, formatExercise, summarizeSession, validateExercise };
+  const api = { PRESET_EXERCISES, findPreset, formatExercise, summarizeSession, validateExercise };
 
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = api; // Node (Tests)

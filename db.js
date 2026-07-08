@@ -91,7 +91,11 @@
   // Settings-Convenience
   async function getConfig() {
     const c = await get('settings', 'config');
-    return c || { key: 'config', sex: 'male', birthdate: '', medA: 'Medikament A', medB: 'Medikament B' };
+    return c || {
+      key: 'config', sex: 'male', birthdate: '',
+      medA: 'Medikament A', medB: 'Medikament B',
+      medA_dose: null, medB_dose: null, // Standard-Dosis (Vorbelegung fürs Tagesformular)
+    };
   }
   async function saveConfig(cfg) {
     cfg.key = 'config';

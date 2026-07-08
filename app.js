@@ -69,9 +69,11 @@ async function loadDaily() {
   $('#sys-e').value = rec?.sys_e ?? '';
   $('#dia-e').value = rec?.dia_e ?? '';
   $('#pulse-e').value = rec?.pulse_e ?? '';
-  // Medikamente: Dosis (mg) + je zwei "genommen"-Checkboxen (morgens/abends)
-  $('#medA').value = rec?.medA_mg ?? '';
-  $('#medB').value = rec?.medB_mg ?? '';
+  // Medikamente: Dosis (mg) + je zwei "genommen"-Checkboxen (morgens/abends).
+  // Für den Tag gespeicherte Dosis hat Vorrang; sonst Standard-Dosis aus den
+  // Einstellungen vorbelegen (Vorbelegung, bei neuen Tagen praktisch).
+  $('#medA').value = rec?.medA_mg ?? cfg.medA_dose ?? '';
+  $('#medB').value = rec?.medB_mg ?? cfg.medB_dose ?? '';
   $('#medA-am').checked = !!rec?.medA_am;
   $('#medA-pm').checked = !!rec?.medA_pm;
   $('#medB-am').checked = !!rec?.medB_am;
@@ -313,6 +315,16 @@ function renderExerciseDraft() {
     li.append(span, del);
     box.appendChild(li);
   });
+}
+
+// Wird eine bekannte Übung gewählt/eingegeben, schlägt ihr Startziel (Dauer bzw.
+// Sätze/Wdh.) vor — aber nur in noch LEERE Felder, um Eingaben nicht zu überschreiben.
+function prefillExercisePreset() {
+  const p = GTTraining.findPreset($('#ex-name').value);
+  if (!p) return;
+  if (p.duration_min != null && $('#ex-duration').value === '') $('#ex-duration').value = p.duration_min;
+  if (p.sets != null && $('#ex-sets').value === '') $('#ex-sets').value = p.sets;
+  if (p.reps != null && $('#ex-reps').value === '') $('#ex-reps').value = p.reps;
 }
 
 // Übung aus den Eingabefeldern zur Entwurfsliste hinzufügen (mit Validierung).
@@ -622,6 +634,8 @@ async function loadSettings() {
   $('#set-birthdate').value = cfg.birthdate || '';
   $('#set-medA').value = cfg.medA || '';
   $('#set-medB').value = cfg.medB || '';
+  $('#set-medA-dose').value = cfg.medA_dose ?? '';
+  $('#set-medB-dose').value = cfg.medB_dose ?? '';
   applyProtocolLabels(cfg.sex); // Hautfalten-Beschriftung passend zum Protokoll
 }
 async function saveSettings() {
@@ -630,6 +644,8 @@ async function saveSettings() {
     birthdate: $('#set-birthdate').value,
     medA: $('#set-medA').value.trim() || 'Medikament A',
     medB: $('#set-medB').value.trim() || 'Medikament B',
+    medA_dose: num($('#set-medA-dose').value),
+    medB_dose: num($('#set-medB-dose').value),
   };
 
   // Validierung: Geburtsdatum darf nicht in der Zukunft liegen (würde Alter/KFA verfälschen).
@@ -679,7 +695,7 @@ async function init() {
   $('#training-date').value = todayISO();
   // Übungs-Vorschläge (Presets) in die datalist des Namensfeldes einhängen.
   const preDl = $('#ex-presets');
-  GTTraining.PRESET_EXERCISES.forEach((n) => { const o = document.createElement('option'); o.value = n; preDl.appendChild(o); });
+  GTTraining.PRESET_EXERCISES.forEach((p) => { const o = document.createElement('option'); o.value = p.name; preDl.appendChild(o); });
   await loadSettings();
   await loadDaily();
   await loadWeekly();
@@ -699,6 +715,7 @@ async function init() {
 
   // Training: Datumswechsel lädt den Tag, Buttons für Übung-Hinzufügen/Speichern.
   $('#training-date').addEventListener('change', loadTraining);
+  $('#ex-name').addEventListener('change', prefillExercisePreset);
   $('#add-exercise').addEventListener('click', addExercise);
   $('#save-training').addEventListener('click', saveTraining);
 

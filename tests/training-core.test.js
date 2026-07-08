@@ -19,10 +19,35 @@ const assert = require('node:assert/strict');
 const t = require('../training-core.js');
 
 /* ===================== PRESET_EXERCISES ===================== */
-test('PRESET_EXERCISES: enthält die drei Standard-Heimübungen', () => {
+test('PRESET_EXERCISES: drei Standard-Heimübungen mit Name und Erfassungsart', () => {
   assert.ok(Array.isArray(t.PRESET_EXERCISES));
   assert.equal(t.PRESET_EXERCISES.length, 3);
-  assert.ok(t.PRESET_EXERCISES.every((s) => typeof s === 'string' && s.length > 0));
+  assert.ok(t.PRESET_EXERCISES.every((p) => typeof p.name === 'string' && p.name.length > 0));
+  // type steuert die Erfassungsart: 'hold' (Haltezeit) oder 'reps' (Wiederholungen).
+  assert.ok(t.PRESET_EXERCISES.every((p) => p.type === 'hold' || p.type === 'reps'));
+});
+
+/* ===================== findPreset ===================== */
+test('findPreset: Baum-Umarmung ist Halteübung mit Startziel 5 Minuten', () => {
+  const p = t.findPreset('Umarmung des großen Baums');
+  assert.ok(p, 'Preset sollte gefunden werden');
+  assert.equal(p.type, 'hold');
+  assert.equal(p.duration_min, 5);
+});
+
+test('findPreset: Rückenheben/Beinheben sind Wiederholungsübungen', () => {
+  assert.equal(t.findPreset('Rückenheben aus Bauchlage').type, 'reps');
+  assert.equal(t.findPreset('Beine heben aus Rückenlage').type, 'reps');
+});
+
+test('findPreset: ignoriert Groß/Kleinschreibung und Randleerzeichen', () => {
+  assert.ok(t.findPreset('  Umarmung Des Großen Baums  '));
+});
+
+test('findPreset: unbekannte oder leere Übung ergibt null', () => {
+  assert.equal(t.findPreset('Gibtsnicht'), null);
+  assert.equal(t.findPreset(''), null);
+  assert.equal(t.findPreset(null), null);
 });
 
 /* ===================== formatExercise ===================== */

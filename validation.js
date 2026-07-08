@@ -180,6 +180,18 @@
       }
     }
 
+    // Standard-Dosis je Medikament (Vorbelegung fürs Tagesformular): 0 erlaubt,
+    // negativ nicht; sehr hoch -> nur Tippfehler-Hinweis. null/leer = nicht gesetzt.
+    for (const [feld, label] of [['medA_dose', 'Standard-Dosis Med A'], ['medB_dose', 'Standard-Dosis Med B']]) {
+      const w = cfg[feld];
+      if (!erfasst(w)) continue;
+      if (w < 0) {
+        errors.push(`${label}: darf nicht negativ sein.`);
+      } else if (w < BANDS.med_mg[0] || w > BANDS.med_mg[1]) {
+        warnings.push(`${label}: ${zahl(w)} mg wirkt unplausibel — bitte auf Tippfehler prüfen.`);
+      }
+    }
+
     return { errors, warnings };
   }
 

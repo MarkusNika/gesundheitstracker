@@ -151,3 +151,23 @@ test('validateConfig: Geburtsdatum in der Zukunft ist Fehler', () => {
 test('validateConfig: plausibles Geburtsdatum in der Vergangenheit ist ok', () => {
   assert.deepEqual(v.validateConfig({ birthdate: '1980-03-01' }, '2026-06-15').errors, []);
 });
+
+test('validateConfig: normale Standard-Dosen sind ok', () => {
+  const r = v.validateConfig({ medA_dose: 5, medB_dose: 50 }, '2026-06-15');
+  assert.deepEqual(r.errors, []);
+  assert.deepEqual(r.warnings, []);
+});
+
+test('validateConfig: negative Standard-Dosis ist Fehler', () => {
+  assert.ok(v.validateConfig({ medA_dose: -1 }, '2026-06-15').errors.length > 0);
+});
+
+test('validateConfig: unplausibel hohe Standard-Dosis warnt, blockiert nicht', () => {
+  const r = v.validateConfig({ medB_dose: 99999 }, '2026-06-15');
+  assert.deepEqual(r.errors, []);
+  assert.ok(r.warnings.length > 0);
+});
+
+test('validateConfig: fehlende Standard-Dosis (null) ist ok', () => {
+  assert.deepEqual(v.validateConfig({ medA_dose: null, medB_dose: undefined }, '2026-06-15').errors, []);
+});

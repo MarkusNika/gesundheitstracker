@@ -147,6 +147,7 @@
           <label>Dauer (min) <input type="number" id="ex-duration" inputmode="decimal" placeholder="min" /></label>
           <label>Schwierigkeit (1–10) <input type="number" id="ex-difficulty" inputmode="numeric" min="1" max="10" placeholder="1–10" /></label>
         </div>
+        <p class="muted">Je nach Übung <strong>Wiederholungen</strong> (Sätze × Wdh.) <em>oder</em> <strong>Haltezeit</strong> (Dauer) erfassen — beides ist möglich. Bei bekannten Übungen wird das Startziel automatisch vorgeschlagen.</p>
         <button id="add-exercise" type="button">+ Übung zur Liste</button>
         <span id="ex-status" class="status"></span>
       </fieldset>
@@ -231,7 +232,10 @@
         <input type="date" id="set-birthdate" />
       </label>
       <label>Name Medikament A <input type="text" id="set-medA" placeholder="z. B. Ramipril" /></label>
+      <label>Standard-Dosis Med A (mg) <input type="number" id="set-medA-dose" inputmode="decimal" placeholder="mg (optional)" /></label>
       <label>Name Medikament B <input type="text" id="set-medB" placeholder="z. B. Amlodipin" /></label>
+      <label>Standard-Dosis Med B (mg) <input type="number" id="set-medB-dose" inputmode="decimal" placeholder="mg (optional)" /></label>
+      <p class="muted">Die Standard-Dosis wird bei neuen Tagen im „Heute"-Formular vorbelegt — praktisch, wenn die Dosis meist gleich bleibt. Ändern lässt sie sich dort trotzdem jederzeit.</p>
       <button id="save-settings" class="primary">Einstellungen speichern</button>
       <span id="set-status" class="status"></span>
     </section>
