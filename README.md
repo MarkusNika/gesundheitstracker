@@ -1,9 +1,11 @@
 # Gesundheitstracker
 
-Persönliche PWA zur Erfassung von Blutdruck, Puls, Medikamenten, Gewicht, Körperfett
-(3-Punkt-Hautfalten, Männer- & Frauen-Protokoll), Monatsfotos und Tagesprotokoll. Daten
-bleiben lokal auf dem Gerät (IndexedDB). CSV-Export für den Arzt, JSON-Vollsicherung als
-Backup. Läuft komplett offline (keine externen Requests, Chart.js lokal eingebunden).
+Persönliche PWA zur Erfassung von Blutdruck (morgens/abends), Puls, Medikamenten
+(Dosis + Einnahme früh/abends), Gewicht, Körperfett (3-Punkt-Hautfalten, Männer- &
+Frauen-Protokoll), Schritten, Befinden (Energie/Libido/Schlaf), Training (Übungen mit
+Sätzen/Wdh. oder Haltezeit), Monatsfotos und Tagesprotokoll. Daten bleiben lokal auf dem
+Gerät (IndexedDB). CSV-Export für den Arzt, JSON-Vollsicherung als Backup. Läuft komplett
+offline (keine externen Requests, Chart.js lokal eingebunden).
 
 > Begleitendes Werkzeug für eine ärztlich betreute Ernährungsumstellung — keine
 > medizinische Beratung. Details siehe `CLAUDE.md`.
@@ -35,8 +37,9 @@ Arzt mailen.
 ## Tests
 
 Die testbare Kernlogik (Eingabe-Validierung, Backup-Import, Körperfett-Berechnung,
-Eintrags-Listen, Foto- und Zeitraum-Helfer) liegt in `*-core.js`-Modulen und ist mit
-dem eingebauten Test-Runner von Node abgedeckt — ohne zusätzliche Abhängigkeiten:
+Eintrags-Listen, Foto- und Zeitraum-Helfer, Trainings-Log) liegt in `*-core.js`-Modulen
+und ist mit dem eingebauten Test-Runner von Node abgedeckt — ohne zusätzliche
+Abhängigkeiten:
 
 ```bash
 node --test
